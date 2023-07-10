@@ -1,4 +1,6 @@
+/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { hrtime } from "process";
 import React from "react";
 
@@ -57,27 +59,47 @@ function ResultsList({ results, term }: Props) {
 
             {result?.content?.results?.organic
               ?.filter((item) => !item.url.includes("url?url="))
-              .map((item) => (
-                <Link
-                  key={item.pos}
-                  prefetch={false}
-                  href={item.url.split("?")?.[0]}
-                  className={`border rounded-2xl flex flex-col hover:shadow-lg transition-all duration-300 ease-in-out`}
-                >
-                  <div className="border-b p-5 flex-1">
-                    <p className="text-[#1b66d2]">{item.title}</p>
-                  </div>
+              .map(async (item) => {
+                const response = await fetch(
+                  `https://my-shopping-phi.vercel.app/api/shopping/product/${item.url
+                    .split("?")?.[0]
+                    .replace("/shopping/product/", "")}`
+                );
 
-                  <div className="px-5 py-2 not-italic">
-                    <p className="font-light">
-                      {item.price_str} {item.currency}
-                    </p>
-                    <p className="text-[#1b66d2] font-semibold">
-                      {item.merchant.name}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                const productData = (await response.json()) as ProductData;
+
+                if (!productData.content.pricing) {
+                  notFound();
+                }
+
+                return (
+                  <Link
+                    key={item.pos}
+                    prefetch={false}
+                    href={item.url.split("?")?.[0]}
+                    className={`border rounded-2xl flex flex-col hover:shadow-lg transition-all duration-300 ease-in-out`}
+                  >
+                    <div className="border-b p-5 flex-1">
+                      <p className="text-[#1b66d2] truncate">{item.title}</p>
+                      <img
+                        loading="lazy"
+                        src={productData.content.images?.full_size[0]}
+                        alt={item.title}
+                        className="h-40 w-40 border rounded-md object-contain p-5 mx-auto mt-5"
+                      />
+                    </div>
+
+                    <div className="px-5 py-2 not-italic">
+                      <p className="font-light">
+                        {item.price_str} {item.currency}
+                      </p>
+                      <p className="text-[#1b66d2] font-semibold truncate">
+                        {item.merchant.name}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
           </div>
         ))}
       </div>
