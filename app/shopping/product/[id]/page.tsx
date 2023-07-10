@@ -19,7 +19,7 @@ type Props = {
 
 async function ProductPage({ params: { id } }: Props) {
   const response = await fetch(
-    `http://localhost:3000/api/shopping/product/${id}`
+    `https://my-shopping-phi.vercel.app/api/shopping/product/${id}`
   );
 
   const productData = (await response.json()) as ProductData;
